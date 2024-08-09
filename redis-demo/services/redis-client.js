@@ -26,18 +26,4 @@ async function save_product(db_object){
 
 }
 
-async function create_session(db_object){
-    try{
-        const key = `sessions:${db_object.id}`
-        const sessionKey = await client.hSet(key,{key:Math.random()*10})
-        client.expireAt(key,parseInt((+new Date) / 1000) + 600)
-        return sessionKey
-    }catch(err){
-        return {error:err}
-    }finally{
-        console.log("session created for "+db_object.name)
-    }
-
-}
-
-export {client,save_product,create_session}
+export {client,save_product}

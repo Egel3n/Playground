@@ -1,4 +1,4 @@
-import { client , create_session} from './services/redis-client.js';
+import { client } from './services/redis-client.js';
 import { connection , checkUser} from "./services/mariadb-client.js"
 import {getProduct,getProductss} from './services/cacher.js'
 
@@ -12,11 +12,12 @@ import cookieParser from 'cookie-parser';
 const app = express();
 const port = 3000;
 
+
+app.use(bodyParser.json())
 let redisStore = new RedisStore({
   client: client,
   prefix: "myapp:",
 })
-
 app.use(session({
   store: redisStore,
   secret: 'egelen',
@@ -24,35 +25,33 @@ app.use(session({
   saveUninitialized: true,
 }));
 
-app.use(bodyParser.json())
 app.use(cookieParser())
 
-
+// sends a cokkie named connect.sid to browser. with this sid creates a session in redis like myapp:<sid> 
 app.get('/', async (req, res) => {
   console.log(req.session)
   if (req.session.views) {
-    req.session.views++;
+    req.session.views++;  
 } else {
-    req.session.views = 1;
+  req.session.views = 1 ;
 }
-res.send(`Views: ${req.session.views}`);
-  console.log(req.session)
+res.send(`${req.session.username}'s Views:${req.session.views}`)
 });
 
 app.post('/login', async (req,res)=>{
+  console.log(req)
   const uName = req.body.username;
   const pWord = req.body.password;
+  console.log(uName)
   const result = await checkUser(uName,pWord);
-  console.log(result)
-  if(result?.error !== undefined){
-    console.log(result.error)
+  if (result == undefined){
+    res.send("WRONG")
     return
   }
-  const sessionKey = create_session(result)
-  res.cookie("sessionKey",sessionKey)
-  res.send("Successful")
-  
-})
+   req.session.username = result.name;
+   res.send("Logged In")
+}
+)
 
 app.listen(port, () => {
   console.log(`Server is running on port ${port}`);
