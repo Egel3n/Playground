@@ -27,4 +27,19 @@ async function getProductSFromDB(ids) {
   return results;
 }
 
-export { connection, getProductFromDB, getProductSFromDB };
+async function checkUser(uName,pWord){
+  try {
+    const result = await connection.query(
+      `SELECT * FROM users WHERE name = '${uName}'`
+    );
+    if (pWord == result[0][0].age){
+      return result[0][0]
+    }else{
+      return {error:"Password Wrong"}
+    }
+  } catch (err) {
+    return { err: err };
+  }
+}
+
+export { connection, getProductFromDB, getProductSFromDB, checkUser };

@@ -3,7 +3,7 @@ import {
   getProductFromDB,
   getProductSFromDB,
 } from "./mariadb-client.js";
-import { client } from "./redis-client.js";
+import { client , save_product} from "./redis-client.js";
 
 const getProduct = async (id) => {
   const key = `products:${id}`;
@@ -11,10 +11,15 @@ const getProduct = async (id) => {
   if (exist) {
     let result = await client.hGetAll(key);
   } else {
-    return await getProductFromDB(id);
+    const db_object = await getProductFromDB(id);
+    const saved = save_product(db_object)
+    if(saved?.error !== null){
+      console.log(saved.error)
+    }
+    return db_object
   }
-};
 
+};
 const getProductss = async (ids) => {
   let products = [];
   let notCachedIDs = [];
@@ -31,7 +36,12 @@ const getProductss = async (ids) => {
 
   if (notCachedIDs.length > 0) {
     const results = await getProductSFromDB(notCachedIDs);
-    results.forEach((p) => products.push(p));
+    results.forEach((p) => {
+      products.push(p);
+      const saved = save_product(p); 
+      if(saved?.error !== null){
+      console.log(saved.error);
+    }});
   }
 
   return products;
